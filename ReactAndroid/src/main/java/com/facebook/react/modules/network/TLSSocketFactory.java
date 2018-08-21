@@ -55,7 +55,8 @@ public class TLSSocketFactory extends SSLSocketFactory {
     }
 
     @Override
-    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+    public Socket createSocket(String host, int port, InetAddress localHost, int localPort)
+            throws IOException, UnknownHostException {
         return enableTLSOnSocket(delegate.createSocket(host, port, localHost, localPort));
     }
 
@@ -65,13 +66,22 @@ public class TLSSocketFactory extends SSLSocketFactory {
     }
 
     @Override
-    public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+    public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort)
+            throws IOException {
         return enableTLSOnSocket(delegate.createSocket(address, port, localAddress, localPort));
     }
 
     private Socket enableTLSOnSocket(Socket socket) {
-        if(socket != null && (socket instanceof SSLSocket)) {
-            ((SSLSocket)socket).setEnabledProtocols(new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"});
+        if (socket != null && (socket instanceof SSLSocket)) {
+            /* ((SSLSocket)socket).setEnabledProtocols(new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}); */
+            /*written as a temporary fix untill the PR https://github.com/facebook/react-native/pull/17309 is accepted in the latest versions*/
+            SSLSocket sslSocket = ((SSLSocket) socket);
+            String[] supportedProtocols = sslSocket.getSupportedProtocols();
+            if (Arrays.asList(supportedProtocols).contains("TLSv1")) {
+                sslSocket.setEnabledProtocols(new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" });
+            } else {
+                sslSocket.setEnabledProtocols(new String[] { "TLSv1.1", "TLSv1.2" });
+            }
         }
         return socket;
     }
